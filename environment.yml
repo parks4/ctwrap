@@ -18,3 +18,4 @@ dependencies:
   - ipython
   - jupyter
   - matplotlib
+  - pandoc  # needed for nbsphinx to process Jupyter notebooks  #TODO add to docs env only
