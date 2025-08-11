@@ -2,16 +2,15 @@
 name: ctwrap
 channels:
   - conda-forge
-  - cantera/label/dev
   - defaults
 dependencies:
-  - python=3.7
+  - python=3.11
   - numpy
   - h5py
   - pint
   - ruamel.yaml>=0.17.0
   - pandas>=1.4
-  - cantera
+  - cantera>=3.1  # installed from conda-forge
   - setuptools
   - pytest
   - pytest-cov
