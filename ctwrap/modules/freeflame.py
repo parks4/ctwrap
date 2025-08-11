@@ -70,15 +70,16 @@ def run(model=None, upstream=None, domain=None, settings=None, restart=None):
         width = domain.width.m_as('meter')
         f = ct.FreeFlame(gas, width=width)
         auto = True
-        if model.transport.lower() != 'mix':
+        if model.transport.lower() != 'mixture-averaged':
             raise ValueError("Initial simulation should use mixture-averaged transport")
 
     f.set_refine_criteria(ratio=settings.ratio, slope=settings.slope, curve=settings.curve)
     if model.transport.lower() == 'soret':
-        f.transport_model = 'Multi'
+        f.transport_model = 'multicomponent'
         f.soret_enabled = True
     else:
-        f.transport_model = model.transport.capitalize()
+        # Use Cantera 3.1 exact transport model names
+        f.transport_model = model.transport
 
     # Solve with mixture-averaged transport model
     f.solve(loglevel=settings.loglevel, auto=auto)

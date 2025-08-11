@@ -7,7 +7,7 @@ upstream:
   oxidizer: O2:1.,AR:5
 model:
   mechanism: h2o2.yaml
-  transport: mix
+  transport: mixture-averaged
 domain:
   width: 30 millimeter # domain width
 settings:

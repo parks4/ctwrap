@@ -5,7 +5,7 @@ strategy:
     upstream.phi: { mode: linspace, limits: [0.4, 2.6], npoints: 12 }
   matrix:
     upstream.phi: { mode: linspace, limits: [0.4, 2.4], npoints: 6 }
-    model.transport: ['mix', 'multi', 'soret']
+    model.transport: ['mixture-averaged', 'multicomponent', 'soret']
 defaults:
   upstream:
     T: 300. kelvin # temperature
@@ -15,7 +15,7 @@ defaults:
     oxidizer: O2:1,AR:5
   model:
     mechanism: h2o2.yaml
-    transport: mix
+    transport: mixture-averaged
   domain:
     width: 30 millimeter # domain width
 output:

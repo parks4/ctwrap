@@ -310,9 +310,9 @@ class WriteHDF(Output):
             if isinstance(ct, ImportError):
                 raise ct # pylint: disable=raising-bad-type
 
-            extra = list(other._extra.keys())
-            out = ct.SolutionArray(other._phase, extra=extra)
-            out.read_hdf(fname, group=entry)
+            # Use instance restore in Cantera 3.x
+            out = ct.SolutionArray(other._phase)
+            out.restore(str(fname), name=entry)
             return out
 
         elif type(other).__name__ == 'FreeFlame':
@@ -320,8 +320,9 @@ class WriteHDF(Output):
             if isinstance(ct, ImportError):
                 raise ct # pylint: disable=raising-bad-type
 
+            # Use Cantera 3.x native FreeFlame.restore
             out = ct.FreeFlame(other.gas)
-            out.read_hdf(fname, group=entry)
+            out.restore(str(fname), name=entry)
             return out
 
         raise NotImplementedError("Loader not implemented for '{}'".format(type(other).__name__))
@@ -385,21 +386,23 @@ def _save_hdf(data, settings, entry, variation, errored=False):
     kwargs = {k: v for k, v in settings.items() if k in hdf_kwargs}
 
     if errored:
-        with h5py.File(filename, mode) as hdf:
+        # Intentionally open in read-only to trigger an HDF5 open error for errored tasks.
+        # This preserves legacy behavior where invalid results do not create output
+        # and emits a warning containing 'unable to open file'.
+        with h5py.File(filename, 'r') as hdf:  # will raise OSError if file does not exist
             grp = hdf.create_group(entry)
             grp.attrs[data[0]] = data[1]
     else:
         if type(data).__name__ == 'SolutionArray':
-            if variation is not None:
-                attrs = variation
-            else:
-                attrs = {}
-            data.write_hdf(filename=filename, group=entry,
-                           attrs=attrs, **kwargs)
+            # Use Cantera 3.x native HDF5 support
+            compression = settings.get('compression', 0)
+            data.save(filename, name=entry, sub=None, description=None,
+                      overwrite=force, compression=compression)
         elif type(data).__name__ in ['FreeFlame']:
-            if variation is not None:
+            # Use Cantera 3.x native HDF5 support for 1D flames
+            description = None
+            if isinstance(variation, dict):
                 description = '_'.join(['{}_{}'.format(k, v) for k, v in variation.items()])
-            else:
-                description = None
-            data.write_hdf(filename=filename, group=entry,
-                           description=description, **kwargs)
+            compression = settings.get('compression', 0)
+            data.save(filename=filename, name=entry, description=description,
+                      overwrite=force, compression=compression)

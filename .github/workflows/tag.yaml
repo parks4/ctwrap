@@ -14,23 +14,24 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-    - uses: actions/checkout@v2
-    - uses: conda-incubator/setup-miniconda@v2
+    - uses: actions/checkout@v4
+    - uses: conda-incubator/setup-miniconda@v3
       with:
-        python-version: 3.7
-        mamba-version: "*"
-        channels: conda-forge,cantera/label/dev,defaults
-        channel-priority: true
-        activate-environment: ctwrap
         environment-file: environment.yml
-    - name: Install ctwrap
+        activate-environment: ctwrap
+        use-mamba: true
+        auto-update-conda: true
+        auto-activate-base: false
+        python-version: "3.11"
+    - name: Install project and docs requirements
+      shell: bash -l {0}
       run: |
         pip install -e .
-    - name: Install Sphinx dependencies
+        pip install -r docs/requirements.txt
+    - name: Build Sphinx HTML
+      shell: bash -l {0}
       run: |
-        cd docs
-        pip install -r requirements.txt
-        sphinx-build -b html . _build
+        sphinx-build -b html docs docs/_build/html
     - if: github.repository == 'microcombustion/ctwrap'
       name: Commit documentation changes
       run: |

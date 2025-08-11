@@ -40,8 +40,13 @@ def get(nbname, nbpath):
             print('Captured Output: \n\n{0}'.format(err.decode("utf-8")))
         else:
             print('\n ..... {0} Passed ..... \n'.format(nbname))
-            # if passed remove the generated html file
-            subprocess.call(['rm', str(nbpath.with_suffix('.html'))])
+            # if passed remove the generated html file (cross-platform)
+            try:
+                Path(nbpath.with_suffix('.html')).unlink(missing_ok=True)
+            except TypeError:
+                p = Path(nbpath.with_suffix('.html'))
+                if p.exists():
+                    p.unlink()
 
         self.assertFalse(failed)
 
