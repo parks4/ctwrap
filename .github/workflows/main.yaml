@@ -2,73 +2,68 @@ name: CI
 
 on:
   push:
-    # Build on tags that look like releases
-    tags:
-      - v*
-    # Build when main or testing is pushed to
-    branches:
-      - main
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 jobs:
-  nosetests-multi-os:
-    name: Run pytest on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-      fail-fast: false
-    defaults:
-      run:
-        shell: bash -l {0}
+  linux-pytest:
+    name: Linux Pytest
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: conda-incubator/setup-miniconda@v2
-      with:
-        python-version: 3.7
-        mamba-version: "*"
-        channels: conda-forge,cantera/label/dev,defaults
-        channel-priority: true
-        activate-environment: ctwrap
-        environment-file: environment.yml
-        #auto-activate-base: false
-    - name: Check conda status
-      run: |
-        conda info
-        conda list
-    - name: Install ctwrap
-      run: |
-        pip install -e .
-    - name: Run pytest
-      run: pytest
-    - name: Get coverage
-      run: coverage report
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  sphinx-docs:
-    name: Check sphinx docs on Linux
-    runs-on: "ubuntu-latest"
-    defaults:
-      run:
+      - name: Set up Miniconda (ctwrap)
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          environment-file: environment.yml
+          activate-environment: ctwrap
+          use-mamba: true
+          auto-update-conda: true
+          auto-activate-base: false
+          python-version: "3.11"
+
+      - name: Install package
         shell: bash -l {0}
+        run: |
+          pip install -e .
+
+      - name: Run pytest
+        shell: bash -l {0}
+        run: |
+          pytest -q
+
+  build-docs:
+    name: Build Docs
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: conda-incubator/setup-miniconda@v2
-      with:
-        python-version: 3.7
-        mamba-version: "*"
-        channels: conda-forge,cantera/label/dev,defaults
-        channel-priority: true
-        activate-environment: ctwrap
-        environment-file: environment.yml
-    - name: Install ctwrap
-      run: |
-        pip install -e .
-    - name: Install Sphinx dependencies
-      run: |
-        cd docs
-        pip install -r requirements.txt
-        sphinx-build -b html . _build
-    - name: Create artifact of the html output
-      uses: actions/upload-artifact@v2
-      with:
-        name: DocumentationHTML
-        path: docs/_build/
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Miniconda (ctwrap)
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          environment-file: environment.yml
+          activate-environment: ctwrap
+          use-mamba: true
+          auto-update-conda: true
+          auto-activate-base: false
+          python-version: "3.11"
+
+      - name: Install project and docs requirements
+        shell: bash -l {0}
+        run: |
+          pip install -e .
+          pip install -r docs/requirements.txt
+
+      - name: Build Sphinx HTML
+        shell: bash -l {0}
+        run: |
+          sphinx-build -b html docs docs/_build/html
+
+      - name: Upload docs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-html
+          path: docs/_build/html

@@ -14,25 +14,23 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-    - uses: actions/checkout@v2
-    - uses: conda-incubator/setup-miniconda@v2
+    - uses: actions/checkout@v4
+    - uses: conda-incubator/setup-miniconda@v3
       with:
-        python-version: 3.7
-        mamba-version: "*"
-        channels: conda-forge,cantera/label/dev,defaults
-        channel-priority: true
-        activate-environment: ctwrap
         environment-file: environment.yml
-        #auto-activate-base: false
-    - name: Check conda status
-      run: |
-        conda info
-        conda list
-    - name: Install ctwrap
+        activate-environment: ctwrap
+        use-mamba: true
+        auto-update-conda: true
+        auto-activate-base: false
+        python-version: "3.11"
+    - name: Install package
+      shell: bash -l {0}
       run: |
         pip install -e .
     - name: Run pytest
-      run: pytest
+      shell: bash -l {0}
+      run: |
+        pytest -q
 
   sphinx-docs:
     name: Check sphinx docs on Linux
@@ -41,25 +39,26 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-    - uses: actions/checkout@v2
-    - uses: conda-incubator/setup-miniconda@v2
+    - uses: actions/checkout@v4
+    - uses: conda-incubator/setup-miniconda@v3
       with:
-        python-version: 3.7
-        mamba-version: "*"
-        channels: conda-forge,cantera/label/dev,defaults
-        channel-priority: true
-        activate-environment: ctwrap
         environment-file: environment.yml
-    - name: Install ctwrap
+        activate-environment: ctwrap
+        use-mamba: true
+        auto-update-conda: true
+        auto-activate-base: false
+        python-version: "3.11"
+    - name: Install project and docs requirements
+      shell: bash -l {0}
       run: |
         pip install -e .
-    - name: Install Sphinx dependencies
+        pip install -r docs/requirements.txt
+    - name: Build Sphinx HTML
+      shell: bash -l {0}
       run: |
-        cd docs
-        pip install -r requirements.txt
-        sphinx-build -b html . _build
-    - name: Create artifact of the html output
-      uses: actions/upload-artifact@v2
+        sphinx-build -b html docs docs/_build/html
+    - name: Upload docs artifact
+      uses: actions/upload-artifact@v4
       with:
-        name: DocumentationHTML
-        path: docs/_build/
+        name: docs-html
+        path: docs/_build/html
