@@ -221,6 +221,11 @@ class WriteCSV(Output):
                     out.append((k, val))
 
             data = pd.Series(dict(out))
+        
+        elif type(data).__name__ == 'SolutionArray':
+
+            # use cantera native route to pandas.DataFrame via SolutionArray.to_pandas
+            data = data.to_pandas()
 
         if isinstance(data, pd.Series):
 
@@ -238,8 +243,18 @@ class WriteCSV(Output):
             df = pd.concat([df, row.to_frame().T], ignore_index=True)
             df.to_csv(fname, index=False)
 
+        elif isinstance(data, pd.DataFrame):
+
+            fname = Path(self.output_name)
+            if fname.is_file():
+                df = pd.read_csv(fname)
+            else:
+                df = pd.DataFrame(columns=data.columns)
+            df = pd.concat([df, data], ignore_index=True)
+            df.to_csv(fname, index=False)
+
         else:
-            raise NotImplementedError("Saving of '{}' not implemented".format(type(data).__name__))
+            raise NotImplementedError("Saving of '{}' not implemented - only Solution, SolutionArray and Mixture are supported".format(type(data).__name__))
 
     def dir(self):
         ""
